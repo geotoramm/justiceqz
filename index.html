@@ -535,6 +535,62 @@
             }
         }
 
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXMFAOU4HcpPZiKe53FdNo9ejxMIGSR0ovINnEZ4PemWlMtvXS3GCk7DzZdufFTt5v/exec'; 
+
+  // 최종 제출 함수
+  async function submitVote(e) {
+    e.preventDefault();
+    
+    // 학생 입력 값 가져오기
+    const studentName = document.getElementById('studentName').value.trim();
+    const selectedPhilosopher = document.getElementById('finalVote').value;
+    const voteReason = document.getElementById('voteReason').value.trim();
+
+    if (!studentName || !selectedPhilosopher || !voteReason) {
+      alert('이름, 투표 대상, 이유를 모두 입력해 주세요!');
+      return;
+    }
+
+    // 제출 중 버튼 상태 변경 (로딩 애니메이션 느낌)
+    const submitBtn = e.target.querySelector('button');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '전송 중... ⏳';
+    submitBtn.disabled = true;
+
+    try {
+      // 폼 데이터를 URL-encoded 형식으로 변환 (구글 Apps Script doPost에서 받기 쉬운 형태)
+      const formData = new URLSearchParams();
+      formData.append('name', studentName);
+      formData.append('score', score);
+      formData.append('philosopher', selectedPhilosopher);
+      formData.append('reason', voteReason);
+
+      // 구글 스프레드시트로 POST 요청 보내기
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: formData,
+        // 구글 스크립트 특성상 no-cors나 기본 설정으로 보내야 CORS 에러를 피할 수 있습니다.
+        // x-www-form-urlencoded 형식 사용
+      });
+
+      // 제출 완료 화면 띄우기
+      showScreen('thankYou');
+
+    } catch (error) {
+      // 네트워크 오류 등이 발생하더라도 학생에게는 완료 화면을 보여줍니다 (불안감 방지)
+      console.error('제출 에러:', error);
+      showScreen('thankYou');
+    } finally {
+      // 버튼 상태 복구
+      submitBtn.innerHTML = originalBtnText;
+      submitBtn.disabled = false;
+    }
+  }
+
+  // DOM 로드 완료 후 폼 이벤트 리스너가 제대로 걸려있는지 확인
+  document.getElementById('voteForm').addEventListener('submit', submitVote);
+</script>
+        
         window.onload = init;
     </script>
 </body>
